@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+ // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Brand {
+  id          Int       @id @default(autoincrement())
+  nombre      String    @db.VarChar(50)
+  category_id Int?
+  Category    Category? @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Item        Item[]
+  Model       Model[]
+
+  @@unique([nombre, category_id])
+}
+
+model Category {
+  id     Int     @id @default(autoincrement())
+  nombre String  @unique @db.VarChar(50)
+  Brand  Brand[]
+  Item   Item[]
+}
+
+model Item {
+  id                           Int       @id @default(autoincrement())
+  nombre                       String    @db.VarChar(100)
+  descripcion                  String?
+  precio                       Decimal   @db.Decimal(12, 2)
+  estado                       String    @default("a_la_venta") @db.VarChar(20)
+  codigo_pieza                 String?   @db.VarChar(50)
+  fecha_creacion               DateTime? @default(now()) @db.Timestamp(6)
+  fecha_vendido                DateTime? @db.Timestamp(6)
+  vendedor_id                  Int?
+  comprador_id                 Int?
+  category_id                  Int?
+  brand_id                     Int?
+  model_id                     Int?
+  year_id                      Int?
+  Brand                        Brand?    @relation(fields: [brand_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Category                     Category? @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  User_Item_comprador_idToUser User?     @relation("Item_comprador_idToUser", fields: [comprador_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Model                        Model?    @relation(fields: [model_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  User_Item_vendedor_idToUser  User?     @relation("Item_vendedor_idToUser", fields: [vendedor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Year                         Year?     @relation(fields: [year_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Photo                        Photo[]
+
+  @@index([estado], map: "idx_item_estado")
+  @@index([nombre], map: "idx_item_nombre")
+  @@index([precio], map: "idx_item_precio")
+}
+
+model Model {
+  id       Int    @id @default(autoincrement())
+  nombre   String @db.VarChar(50)
+  brand_id Int?
+  Item     Item[]
+  Brand    Brand? @relation(fields: [brand_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Year     Year[]
+
+  @@unique([nombre, brand_id])
+}
+
+model Photo {
+  id        Int    @id @default(autoincrement())
+  data      Bytes
+  mime_type String @db.VarChar(50)
+  item_id   Int?
+  Item      Item?  @relation(fields: [item_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model Rating {
+  id                               Int       @id @default(autoincrement())
+  puntuacion                       Int
+  comentario                       String?
+  user_id                          Int?
+  target_user_id                   Int?
+  created_at                       DateTime? @default(now()) @db.Timestamp(6)
+  User_Rating_target_user_idToUser User?     @relation("Rating_target_user_idToUser", fields: [target_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  User_Rating_user_idToUser        User?     @relation("Rating_user_idToUser", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model Role {
+  id     Int    @id @default(autoincrement())
+  nombre String @unique @db.VarChar(30)
+  User   User[]
+}
+
+model User {
+  id                                 Int       @id @default(autoincrement())
+  nombre                             String    @db.VarChar(100)
+  email                              String    @unique @db.VarChar(100)
+  password                           String    @db.VarChar(255)
+  telefono                           String    @db.VarChar(20)
+  reputacion                         Float?    @default(0)
+  created_at                         DateTime? @default(now()) @db.Timestamp(6)
+  role_id                            Int?
+  Item_Item_comprador_idToUser       Item[]    @relation("Item_comprador_idToUser")
+  Item_Item_vendedor_idToUser        Item[]    @relation("Item_vendedor_idToUser")
+  Rating_Rating_target_user_idToUser Rating[]  @relation("Rating_target_user_idToUser")
+  Rating_Rating_user_idToUser        Rating[]  @relation("Rating_user_idToUser")
+  Role                               Role?     @relation(fields: [role_id], references: [id], onUpdate: NoAction)
+
+  @@index([email], map: "idx_user_email")
+}
+
+model Year {
+  id       Int    @id @default(autoincrement())
+  valor    Int
+  model_id Int?
+  Item     Item[]
+  Model    Model? @relation(fields: [model_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([valor, model_id])
+}
