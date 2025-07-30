@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from '@prisma/client';
+import { IUserRepository } from './interfaces/user-repository.interface';
 
 @Injectable()
-export class UserService {
-    constructor(private readonly userRepository: UserRepository) { }
+export class UserService implements IUserRepository {
+    constructor(
+        @Inject('UserRepositoryInterface')
+        private readonly userRepository: IUserRepository
+    ) { }
 
     async create(data: CreateUserDto): Promise<User> {
         return this.userRepository.create(data);
