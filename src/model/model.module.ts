@@ -1,9 +1,17 @@
 import { Module } from '@nestjs/common';
 import { ModelController } from './model.controller';
 import { ModelService } from './model.service';
+import { ModelRepository } from './model.repository';
+import { PrismaService } from 'src/prisma.service';
 
 @Module({
   controllers: [ModelController],
-  providers: [ModelService]
+  providers: [{
+    provide: 'ModelRepositoryInterface',
+    useClass: ModelRepository
+  },
+    ModelService,
+    PrismaService
+  ]
 })
-export class ModelModule {}
+export class ModelModule { }
